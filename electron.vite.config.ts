@@ -26,7 +26,7 @@ export default defineConfig(({ command, mode }) => {
           input: {
             index: resolve(__dirname, "electron/main/index.ts"),
             // lyric: resolve(__dirname, "web/lyric.html"),
-            // loading: resolve(__dirname, "web/loading.html"),
+            loading: resolve(__dirname, "web/loading.html"),
           },
         },
       },
