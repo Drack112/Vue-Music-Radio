@@ -5,7 +5,7 @@ import initIpcMain from "./ipcMain";
 import Store from "electron-store";
 import { initStore, StoreType } from "./store";
 import { join } from "path";
-import { isDev } from "./utils";
+import { appName, isDev, isMac } from "./utils";
 
 class MainProcess {
   // Windows
@@ -45,7 +45,7 @@ class MainProcess {
 
   private createWindow(options: BrowserWindowConstructorOptions = {}): BrowserWindow {
     const defaultOptions: BrowserWindowConstructorOptions = {
-      title: "Vue Tube",
+      title: appName,
       width: 1280,
       height: 720,
       frame: false,
@@ -120,6 +120,13 @@ class MainProcess {
     }
   }
 
+  //Atualiza o tamanho da janela
+  private saveBounds() {
+    if (this.mainWindow?.isFullScreen()) return;
+    const bounds = this.mainWindow?.getBounds();
+    if (bounds) this.store?.set("window", bounds);
+  }
+
   handleAppEvents() {
     app.on("activate", () => {
       const allWindows = BrowserWindow.getAllWindows();
@@ -129,11 +136,48 @@ class MainProcess {
         this.createMainWindow();
       }
     });
+
+    app.on("window-all-closed", () => {
+      if (!isMac) app.quit();
+      this.mainWindow = null;
+      this.loadingWindow = null;
+    });
+
+    app.on("second-instance", () => {
+      this.showWindow();
+    });
+
+    // Protocolo personalizado
+    app.on("open-url", (_, url) => {
+      console.log("Received custom protocol URL:", url);
+    });
+
+    app.on("will-quit", () => {
+      this.isQuit = true;
+    });
   }
 
   handleWindowEvents() {
     this.mainWindow?.on("ready-to-show", () => {
       if (!this.mainWindow) return;
+    });
+
+    this.mainWindow?.on("focus", () => {
+      if (this.mainWindow?.isFullScreen()) return;
+      this.saveBounds();
+    });
+
+    this.mainWindow?.on("moved", () => {
+      this.saveBounds();
+    });
+
+    this.mainWindow?.on("close", (event) => {
+      event.preventDefault();
+      if (this.isQuit) {
+        app.exit();
+      } else {
+        this.mainWindow?.hide();
+      }
     });
   }
 }
