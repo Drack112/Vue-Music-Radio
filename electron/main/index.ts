@@ -1,10 +1,11 @@
 import { app, BrowserWindow, BrowserWindowConstructorOptions, shell } from "electron";
-import log from "./logger";
-import { electronApp } from "@electron-toolkit/utils";
-import initIpcMain from "./ipcMain";
+import { join } from "path";
 import Store from "electron-store";
 import { initStore, StoreType } from "./store";
-import { join } from "path";
+import log from "./logger";
+import { electronApp } from "@electron-toolkit/utils";
+import initAppServer from "../server";
+import initIpcMain from "./ipcMain";
 import { appName, isDev, isMac } from "./utils";
 
 class MainProcess {
@@ -38,8 +39,11 @@ class MainProcess {
       this.handleAppEvents();
       this.handleWindowEvents();
 
+      // Init server
+      await initAppServer();
+
       // run main view
-      initIpcMain(this.mainWindow, this.loadingWindow);
+      initIpcMain(this.mainWindow, this.loadingWindow, this.store);
     });
   }
 
@@ -120,7 +124,7 @@ class MainProcess {
     }
   }
 
-  //Atualiza o tamanho da janela
+  // Atualiza o tamanho da janela
   private saveBounds() {
     if (this.mainWindow?.isFullScreen()) return;
     const bounds = this.mainWindow?.getBounds();
