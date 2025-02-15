@@ -6,6 +6,7 @@ import log from "../main/logger";
 import { join } from "path";
 import { isDev } from "../main/utils";
 import initNcmApi from "./netease";
+import initUnblockAPI from "./unblock";
 
 const initAppServer = async () => {
   try {
@@ -42,6 +43,7 @@ const initAppServer = async () => {
     });
 
     server.register(initNcmApi, { prefix: "/api" });
+    server.register(initUnblockAPI, { prefix: "/api" });
 
     const port = Number(import.meta.env["VITE_SERVER_PORT"] || 25884);
     await server.listen({ port });
